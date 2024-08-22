@@ -102,6 +102,11 @@ class Course:
         res += "waitlist open: {}\n".format('yes' if self.waitlist_available() else 'no')
         res += "prerequisites: {}".format(self.get_prereqs())
         return res
+    
+    def get_vacant(self) -> int:
+        data = self.get_registration_info(self.term)
+        return int(data['vacant'])
+        
 
 class WaitlistNotifier(notifier.Notifier):
     def __init__(self, course: Course):
@@ -141,9 +146,23 @@ class CourseList:
             if course.is_open():
                 notif = OpenCourseNotifierMac(course) if platform.system() == "Darwin" else OpenCourseNotifier(course)
                 print(course)
+                # print(f'Vacant: {course.get_vacant()}')
                 notif.run_async()
                 self.courses.remove(course)
             time.sleep(0.025)
+    
+    # Submit a reques to the server while course is vacant
+    def submit_avail_course(self):
+        for course in self.courses:
+            if course.is_open():
+                # notif = OpenCourseNotifierMac(course) if platform.system() == "Darwin" else OpenCourseNotifier(course)
+                vacant: int = course.get_vacant()
+                if vacant != 0:
+                    # TODO: submit request using some chrome stuff
+                    print(f"This is a dummy submit request {course.__str__()}")
+                    self.courses.remove(course)
+                else:
+                    print("not vacant, cannot submit")
 
     def run_notifiers(self):
         while self.courses:
